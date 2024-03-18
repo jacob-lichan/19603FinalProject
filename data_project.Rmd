@@ -1,0 +1,36 @@
+---
+title: "data_project"
+output: pdf_document
+date: "2024-03-20"
+---
+
+# Final Project
+
+```{r, include = TRUE, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(modelr)
+library(sf)
+
+# Load data
+df <- read_csv("lyde.csv") #lanternfly data
+road_sf <- read_sf("tl_2021_us_primaryroads.shp") #major US roads data
+
+```
+
+# Map
+```{r}
+library(maps)
+usa <- map_data("usa")
+
+# plot the US
+ggplot() +
+  geom_polygon(data=usa, aes(long, lat, group = group), fill = "white", colour = "black") + #plot blank US map
+  geom_sf(data = road_sf) #plot major roads
+
+
+```
+
+# Plot 1
+```{r, warning = FALSE, message = FALSE, fig.width = 10, fig.height = 3}
+
+```
