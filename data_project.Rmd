@@ -13,7 +13,7 @@ library(sf)
 
 # Load data
 df <- read_csv("lyde.csv") #lanternfly data
-road_sf <- read_sf("tl_2021_us_primaryroads.shp") #major US roads data
+road_sf <- read_sf("tl_2019_us_primaryroads.shp") #major US roads data
 
 ```
 
@@ -21,12 +21,15 @@ road_sf <- read_sf("tl_2021_us_primaryroads.shp") #major US roads data
 ```{r}
 library(maps)
 usa <- map_data("usa")
+road_sf %>%
+  filter()
 
 # plot the US
 ggplot() +
   geom_polygon(data=usa, aes(long, lat, group = group), fill = "white", colour = "black") + #plot blank US map
-  geom_sf(data = road_sf) #plot major roads
-
+  geom_sf(data = road_sf) + #plot major roads
+  scale_y_continuous(limits = c(25, 50)) +
+  scale_x_continuous(limits = c(-125, -65))
 
 ```
 
