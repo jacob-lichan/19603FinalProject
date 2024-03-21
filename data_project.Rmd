@@ -18,73 +18,90 @@ road_sf <- read_sf("tl_2019_us_primaryroads.shp") #major US roads data
 ```
 
 # Map
-```{r fig.height=10, fig.width=12}
+```{r}
 library(maps)
-# library(maptools)
 usa <- map_data("usa")
-df %>%
-  filter(latitude>25 & latitude <50 & longitude > -130) #Filter to continental US
+df2 <-  df %>%
+  filter(latitude>25 & latitude <50 & longitude > -130 & lyde_present == TRUE) #Filter to continental US and true sightings
 
-# lonlat_to_county_sp <- function(pointsDF) {
-#     # Prepare SpatialPolygons object with one SpatialPolygon
-#     # per state (plus DC, minus HI & AK)
-#     states <- map('county', fill=TRUE, col="transparent", plot=FALSE)
-#     IDs <- sapply(strsplit(states$names, ":"), function(x) x[1])
-#     states_sp <- map2SpatialPolygons(states, IDs=IDs,
-#                      proj4string=CRS("+proj=longlat +datum=WGS84"))
-# 
-#     # Convert pointsDF to a SpatialPoints object 
-#     pointsSP <- SpatialPoints(pointsDF, 
-#                     proj4string=CRS("+proj=longlat +datum=WGS84"))
-# 
-#     # Use 'over' to get _indices_ of the Polygons object containing each point 
-#         indices <- over(pointsSP, states_sp)
-# 
-#     # Return the state names of the Polygons object containing each point
-#     stateNames <- sapply(states_sp@polygons, function(x) x@ID)
-#     stateNames[indices]
-# }
-# 
-# pointsDF <- df[, c("latitude", "longitude")]
-# 
-# df <- df %>%
-#   mutate(county_info = lonlat_to_county_sp(pointsDF))
-
-# # plot the US
-# ggplot() +
-#   geom_polygon(data=usa, aes(long, lat, group = group), fill = "white", colour = "black") + #plot blank US map
-#   geom_point(data = df, aes(x = longitude, y = latitude), size = .5, color = "blue", alpha = .2) + #Plots lanternfly spottings
-#   geom_sf(data = road_sf) + #plot major roads
-#   scale_y_continuous(limits = c(25, 50)) +
-#   scale_x_continuous(limits = c(-125, -65))
-# 
-# # plot the northeast
-# ggplot() +
-#   geom_polygon(data=usa, aes(long, lat, group = group), fill = "white", colour = "black") + #plot blank US map
-#   geom_point(data = df, aes(x = longitude, y = latitude, color = factor(year)), size = .5, alpha = .2) + #Plots lanternfly spottings
-#   geom_sf(data = road_sf) + #plot major roads
-#   scale_y_continuous(limits = c(35, 44)) +
-#   scale_x_continuous(limits = c(-85, -70))+
-#   guides(color = guide_legend(override.aes = list(size = 3))) +
-#   theme(legend.key.size = unit(1.5, "lines"))
-
-
+# plot the US
 ggplot() +
   geom_polygon(data=usa, aes(long, lat, group = group), fill = "white", colour = "black") + #plot blank US map
-  geom_point(data = df, aes(x = longitude, y = latitude, color = factor(year)), size = .5, alpha = .2) + #Plots lanternfly spottings
-  geom_sf(data = road_sf) + #plot major roads geom_point(data = df, aes(x = longitude, y = latitude))
+  geom_sf(data = road_sf) + #plot major roads
+  geom_point(data = df2, aes(x = longitude, y = latitude), size = .5, color = "blue", alpha = .2) + #Plots lanternfly spottings
+  scale_y_continuous(limits = c(25, 50)) +
+  scale_x_continuous(limits = c(-125, -65))
+  
+# plot the northeast
+ggplot() +
+  geom_polygon(data=usa, aes(long, lat, group = group), fill = "white", colour = "black") + #plot blank US map
+  geom_sf(data = road_sf) + #plot major roads
+  geom_point(data = df2, aes(x = longitude, y = latitude, color = factor(year)), size = .5, alpha = .2) + #Plots lanternfly spottings
+  scale_y_continuous(limits = c(35, 44)) +
+  scale_x_continuous(limits = c(-85, -70))+
+  guides(color = guide_legend(override.aes = list(size = 3))) +
+  theme(legend.key.size = unit(1.5, "lines"))
+
+
+ggplot() + 
+  geom_polygon(data=usa, aes(long, lat, group = group), fill = "white", colour = "black") + #plot blank US map
+  geom_sf(data = road_sf) + #plot major roadsgeom_point(data = df, aes(x = longitude, y = latitude)) 
+  geom_point(data = df2, aes(x = longitude, y = latitude), color = "purple", size = .5, alpha = .2) + #Plots lanternfly spottings
   facet_wrap(~ year, nrow = 2) +
   scale_y_continuous(limits = c(35, 44)) +
   scale_x_continuous(limits = c(-85, -70))+
   guides(color = guide_legend(override.aes = list(size = 3))) +
   theme(legend.key.size = unit(1.5, "lines"))
 
+
 ```
 
 # Model 1
 ```{r, warning = FALSE, message = FALSE, fig.width = 10, fig.height = 3}
 
-df %>% filter(!is.na(state))
-model_1 <- lm(state~year, data = df)
+#Model 1: lyde present by linear state and year
+model_1 <- lm(lyde_present~state + I(year), data = df)
+model_1_output <- coef(model_1)
+
+grid_values <- df %>%
+  data_grid(
+    year = unique(df$year), 
+    state = unique(df$state)
+  )
+
+prediction_1 <- grid_values %>%
+  gather_predictions(model_1)
+
+prediction_1 %>%
+  pivot_wider(names_from = year, values_from = pred) -> table_1
+
+
+#Model 2: lyde established by linear state and year
+model_2 <- lm(lyde_established~state + I(year), data = df)
+model_2_output <- coef(model_2)
+
+grid_values <- df %>%
+  data_grid(
+    year = unique(df$year), 
+    state = unique(df$state)
+  )
+
+prediction_2 <- grid_values %>%
+  gather_predictions(model_2)
+
+prediction_2 %>%
+  pivot_wider(names_from = year, values_from = pred) -> table_2
+
+#Prints model 1 and 2 tables
+knitr::kable(
+  table_1[ ,2:ncol(table_1)],
+  digits = 3
+)
+
+knitr::kable(
+  table_2[ ,2:ncol(table_2)],
+  digits = 3
+)
+
 
 ```
