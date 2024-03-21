@@ -53,6 +53,19 @@ ggplot() +
   guides(color = guide_legend(override.aes = list(size = 3))) +
   theme(legend.key.size = unit(1.5, "lines"))
 
+df3 <-  df %>%
+  filter(latitude>25 & latitude <50 & longitude > -130 & lyde_established == TRUE) #Filter to continental US and true sightings
+
+ggplot() + 
+  geom_polygon(data=usa, aes(long, lat, group = group), fill = "white", colour = "black") + #plot blank US map
+  geom_sf(data = road_sf) + #plot major roadsgeom_point(data = df, aes(x = longitude, y = latitude)) 
+  geom_point(data = df3, aes(x = longitude, y = latitude), color = "purple", size = .5, alpha = .2) + #Plots lanternfly spottings
+  facet_wrap(~ year, nrow = 2) +
+  scale_y_continuous(limits = c(35, 44)) +
+  scale_x_continuous(limits = c(-85, -70))+
+  guides(color = guide_legend(override.aes = list(size = 3))) +
+  theme(legend.key.size = unit(1.5, "lines"))
+
 
 ```
 
@@ -95,12 +108,12 @@ prediction_2 %>%
 #Prints model 1 and 2 tables
 knitr::kable(
   table_1[ ,2:ncol(table_1)],
-  digits = 3
+  digits = 2
 )
 
 knitr::kable(
   table_2[ ,2:ncol(table_2)],
-  digits = 3
+  digits = 2
 )
 
 
